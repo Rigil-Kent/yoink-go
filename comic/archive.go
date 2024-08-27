@@ -18,6 +18,10 @@ func (a ArchiveError) Error() string {
 	return a.Message
 }
 
+// Archive creates a zip archive of the comic files.
+//
+// It takes no parameters.
+// Returns an error if the operation fails.
 func (c *Comic) Archive() error {
 
 	outputPath := filepath.Join(c.LibraryPath, c.Title, c.Title+".cbz")

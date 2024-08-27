@@ -8,6 +8,11 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// Markup retrieves the HTML content from a given URL and returns a goquery Document.
+//
+// url is the URL to retrieve the HTML content from.
+// c is a channel for sending the retrieved goquery Document.
+// Returns the retrieved goquery Document.
 func Markup(url string, c chan *goquery.Document) *goquery.Document {
 	res, err := http.Get(url)
 	if err != nil {
@@ -33,6 +38,11 @@ func Markup(url string, c chan *goquery.Document) *goquery.Document {
 	return markup
 }
 
+// ParseImageLinks parses a goquery document to extract image links.
+//
+// markup is the goquery document to parse for image links.
+// c is a channel for sending the extracted image links.
+// Returns a slice of image links and an error if no images are found.
 func ParseImageLinks(markup *goquery.Document, c chan []string) ([]string, error) {
 	var links []string
 	markup.Find("img").Each(func(_ int, image *goquery.Selection) {

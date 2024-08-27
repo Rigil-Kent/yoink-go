@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+// Cleanup removes unnecessary files from the comic directory.
+//
+// It walks through the directory and deletes files with .jpg, .jpeg, or .png extensions that do not start with "001".
+// No parameters.
+// Returns an error if the operation fails.
 func (c *Comic) Cleanup() error {
 	filepath.Walk(
 		filepath.Join(c.LibraryPath, c.Title),

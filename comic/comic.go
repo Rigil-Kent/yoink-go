@@ -20,6 +20,10 @@ type Comic struct {
 	LibraryPath string
 }
 
+// extractTitleFromMarkup extracts the title from the comic's markup.
+//
+// c is the Comic instance containing the markup to extract the title from.
+// Returns the extracted title as a string.
 func extractTitleFromMarkup(c Comic) string {
 	yearFormat := `^(.*?)\s+\(\d{4}(?:\s+.+)?\)`
 	selection := c.Markup.Find("title")
@@ -39,6 +43,14 @@ func extractTitleFromMarkup(c Comic) string {
 	return strings.ReplaceAll(matches[1], ":", "")
 }
 
+// NewComic creates a new Comic instance from the provided URL and library path.
+//
+// url is the URL of the comic to be parsed.
+// libraryPath is the path to the local library where the comic will be stored.
+// imageChannel is a channel for receiving image links.
+// markupChannel is a channel for receiving the comic's markup.
+//
+// Returns a pointer to the newly created Comic instance.
 func NewComic(
 	url string, libraryPath string,
 	imageChannel chan []string,
@@ -63,6 +75,11 @@ func NewComic(
 	return c
 }
 
+// Cover returns the absolute filepath of the cover image of the comic.
+//
+// It iterates through the list of images associated with the comic and returns the first image that ends with "000.jpg" or "001.jpg".
+// If no such image is found, it returns an error.
+// Returns the absolute filepath of the cover image and an error.
 func (c *Comic) Cover() (imageFilepath string, err error) {
 	for _, image := range c.Filelist {
 		if strings.HasSuffix(image, "000.jpg") || strings.HasSuffix(image, "001.jpg") {
