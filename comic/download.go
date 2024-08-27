@@ -11,6 +11,15 @@ import (
 	cloudflarebp "github.com/DaRealFreak/cloudflare-bp-go"
 )
 
+type ComicDownloadError struct {
+	Message string
+	Code    int
+}
+
+func (c ComicDownloadError) Error() string {
+	return c.Message
+}
+
 // downloadFile downloads a file from a given URL and saves it to a specified location.
 //
 // The function takes a URL string, a page number, and a Comic struct as parameters.

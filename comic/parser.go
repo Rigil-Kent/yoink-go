@@ -8,6 +8,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+type ImageParseError struct {
+	Message string
+	Code    int
+}
+
+func (i ImageParseError) Error() string {
+	return i.Message
+}
+
 // Markup retrieves the HTML content from a given URL and returns a goquery Document.
 //
 // url is the URL to retrieve the HTML content from.
