@@ -20,7 +20,7 @@ jobs:
           go-version: '1.20'
 
       - name: Build
-        run: go build -o ./yoink
+        run: go build -o yoink
 
       - name: Release
         uses: ./.github/actions/release@v1
