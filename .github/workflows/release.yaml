@@ -24,7 +24,7 @@ jobs:
         run: go build -o yoink
 
       - name: Release
-        uses: ./.github/actions/release@v1
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
