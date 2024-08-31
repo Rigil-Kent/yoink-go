@@ -7,8 +7,9 @@ on:
 
 jobs:
   yoink-release:
-    name: Release
-    runs-on: ARM64
+    name: Yoink Build and Release
+    runs-on: [self-hosted, linux, arm64]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -18,7 +19,7 @@ jobs:
         with:
           go-version: '1.22.3'
 
-      - name: Build
+      - name: Linux Build
         run: go build -o yoink
 
       - name: Create Release
@@ -33,7 +34,11 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
+      - name: Save upload_url
+        run: echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" > upload_url.txt
+        shell: bash
+
+      - name: Upload Linux Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,4 +46,43 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./yoink
           asset_name: yoink
+          asset_content_type: application/x-executable
+
+  build-and-release-win:
+    runs-on: windows-latest
+    needs: yoink-release
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.3'
+
+      - name: Windows Build
+        run: go build -o yoink.exe
+
+      - name: Download upload_url artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: upload_url.txt
+          path: .
+
+      - name: Read upload_url artifact
+        id: read_upload_url
+        run: |
+          UPLOAD_URL=$(cat upload_url.txt)
+          echo "::set-output name=upload_url::$UPLOAD_URL"
+        shell: bash
+
+      - name: Upload Windows Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.read_upload_url.outputs.upload_url }}
+          asset_path: ./yoink.exe
+          asset_name: yoink.exe
           asset_content_type: application/x-executable
