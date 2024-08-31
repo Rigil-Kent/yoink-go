@@ -41,7 +41,7 @@ jobs:
       - name: Upload upload_url artifact
         uses: actions/upload-artifact@v3
         with:
-          name: upload_url.txt
+          name: upload_url
           path: ./upload_url.txt
 
       - name: Upload Linux Release Asset
@@ -82,6 +82,10 @@ jobs:
           UPLOAD_URL=$(cat upload_url.txt)
           echo "::set-output name=upload_url::$UPLOAD_URL"
         shell: bash
+
+      - name: Debug upload_url
+        run: echo ${{ steps.read_upload_url.outputs.upload_url }}
+        shell: bash  
 
       - name: Upload Windows Release Asset
         uses: actions/upload-release-asset@v1
