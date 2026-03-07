@@ -17,7 +17,7 @@ Build from source (requires Go 1.22.3+):
 go build -o yoink
 ```
 
-Pre-built binaries for Linux (arm64) and Windows are available on the [releases page](../../releases).
+Pre-built binaries for Linux (arm64) and Windows are available on the [releases page](https://git.brizzle.dev/bryan/yoink-go/releases).
 
 ## Usage
 
