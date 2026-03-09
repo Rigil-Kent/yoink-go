@@ -18,7 +18,7 @@ FROM gcr.io/distroless/base-debian12:nonroot
 
 LABEL org.opencontainers.image.title="yoink" \
       org.opencontainers.image.description="Comic downloader web UI" \
-      org.opencontainers.image.source="https://github.com/bryanlundberg/yoink-go"
+      org.opencontainers.image.source="https://git.brizzle.dev/bryan/yoink-go"
 
 WORKDIR /app
 

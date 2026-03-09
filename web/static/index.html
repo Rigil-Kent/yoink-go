@@ -4,106 +4,162 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Yoink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d0f14;
-      --surface:   #13151e;
-      --card:      #1a1d2e;
-      --border:    #252840;
-      --accent:    #4f8ef7;
-      --accent-hv: #6aa3ff;
-      --text:      #e2e8f0;
-      --muted:     #6b7280;
-      --success:   #22c55e;
-      --error:     #ef4444;
-      --warn:      #f59e0b;
+      --bg:        #0c0e15;
+      --surface:   #12151f;
+      --surface2:  #181c2a;
+      --card:      #1a1e2e;
+      --border:    #21273d;
+      --border2:   #2c3350;
+      --accent:    #5b8cf5;
+      --accent-hv: #7aa3ff;
+      --accent-dim: rgba(91,140,245,0.12);
+      --text:      #dde3f0;
+      --text2:     #a8b3cc;
+      --muted:     #505870;
+      --success:   #34d399;
+      --error:     #f87171;
+      --warn:      #fbbf24;
+
+      --radius:    8px;
+      --radius-sm: 5px;
     }
+
+    html { scrollbar-color: var(--border2) var(--bg); scrollbar-width: thin; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
       min-height: 100vh;
     }
 
-    /* ── Header ─────────────────────────────────────────────── */
+    /* Subtle dot grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Everything above the background */
+    header, #queue, main, #toast { position: relative; z-index: 1; }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
     header {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 64px;
+      height: 68px;
+      padding: 0 28px;
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
+      background: rgba(18, 21, 31, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
     }
 
+    /* ── Logo ──────────────────────────────────────────────────────────── */
     .logo {
-      font-size: 1.4rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
       flex-shrink: 0;
     }
 
-    .logo span {
+    .logo-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(91,140,245,0.4);
+    }
+
+    .logo-icon svg { display: block; }
+
+    .logo-text {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       color: var(--text);
     }
 
+    .logo-text span { color: var(--accent); }
+
+    /* ── URL form ────────────────────────────────────────────────────────── */
     .url-form {
       flex: 1;
       display: flex;
-      gap: 0;
-      max-width: 760px;
+      max-width: 680px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 4px 4px 20px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .url-form:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,245,0.15);
     }
 
     .url-input {
       flex: 1;
-      height: 40px;
-      padding: 0 16px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-right: none;
-      border-radius: 6px 0 0 6px;
+      background: transparent;
+      border: none;
       color: var(--text);
-      font-size: 0.9rem;
+      font-family: inherit;
+      font-size: 0.875rem;
       outline: none;
-      transition: border-color 0.15s;
+      min-width: 0;
     }
 
     .url-input::placeholder { color: var(--muted); }
-    .url-input:focus { border-color: var(--accent); }
 
     .url-btn {
-      height: 40px;
+      height: 36px;
       padding: 0 20px;
       background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 0 6px 6px 0;
-      font-size: 0.875rem;
-      font-weight: 600;
+      border-radius: 999px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       cursor: pointer;
       white-space: nowrap;
-      transition: background 0.15s;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
     }
 
-    .url-btn:hover { background: var(--accent-hv); }
-    .url-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .url-btn:hover  { background: var(--accent-hv); }
+    .url-btn:active { transform: scale(0.97); }
+    .url-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
-    /* ── Queue strip ─────────────────────────────────────────── */
+    /* ── Queue strip ─────────────────────────────────────────────────────── */
     #queue {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
       display: none;
       flex-direction: column;
-      gap: 1px;
     }
 
     #queue.visible { display: flex; }
@@ -111,16 +167,32 @@
     .queue-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 0;
+      gap: 14px;
+      padding: 11px 28px;
       border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
+      transition: background 0.15s;
     }
 
     .queue-item:last-child { border-bottom: none; }
+    .queue-item:hover { background: rgba(255,255,255,0.02); }
+
+    .queue-status-bar {
+      width: 3px;
+      height: 36px;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .queue-item[data-status="pending"]  .queue-status-bar { background: var(--muted); }
+    .queue-item[data-status="running"]  .queue-status-bar { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .queue-item[data-status="complete"] .queue-status-bar { background: var(--success); }
+    .queue-item[data-status="error"]    .queue-status-bar { background: var(--error); }
+
+    .queue-meta { flex: 1; min-width: 0; }
 
     .queue-title {
-      flex: 1;
+      font-size: 0.85rem;
+      font-weight: 600;
       color: var(--text);
       overflow: hidden;
       text-overflow: ellipsis;
@@ -128,12 +200,12 @@
     }
 
     .queue-url {
+      font-size: 0.72rem;
       color: var(--muted);
-      font-size: 0.75rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 320px;
+      margin-top: 2px;
     }
 
     .status-pill {
@@ -142,18 +214,19 @@
       gap: 6px;
       padding: 3px 10px;
       border-radius: 999px;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 600;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .status-pill.pending  { background: rgba(107,114,128,0.2); color: var(--muted); }
-    .status-pill.running  { background: rgba(79,142,247,0.15); color: var(--accent); }
-    .status-pill.complete { background: rgba(34,197,94,0.15);  color: var(--success); }
-    .status-pill.error    { background: rgba(239,68,68,0.15);  color: var(--error); }
+    .status-pill.pending  { background: rgba(80,88,112,0.25);  color: var(--text2); }
+    .status-pill.running  { background: var(--accent-dim);      color: var(--accent); }
+    .status-pill.complete { background: rgba(52,211,153,0.12);  color: var(--success); }
+    .status-pill.error    { background: rgba(248,113,113,0.12); color: var(--error); }
 
     .spinner {
-      width: 12px; height: 12px;
+      width: 11px; height: 11px;
       border: 2px solid currentColor;
       border-top-color: transparent;
       border-radius: 50%;
@@ -168,134 +241,262 @@
       border: none;
       color: var(--muted);
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 1.1rem;
       line-height: 1;
-      padding: 2px 4px;
-      border-radius: 4px;
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: color 0.12s, background 0.12s;
     }
 
     .dismiss-btn:hover { color: var(--text); background: var(--border); }
 
-    /* ── Main grid ───────────────────────────────────────────── */
-    main {
-      padding: 28px 24px;
+    /* ── Main ────────────────────────────────────────────────────────────── */
+    main { padding: 32px 28px; }
+
+    /* ── Library toolbar ─────────────────────────────────────────────────── */
+    .library-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
     }
 
     .section-heading {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 20px;
+      flex-shrink: 0;
     }
 
+    .comic-count {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    .filter-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .filter-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      display: flex;
+    }
+
+    .filter-input {
+      height: 32px;
+      padding: 0 12px 0 32px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.8rem;
+      outline: none;
+      width: 200px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .filter-input::placeholder { color: var(--muted); }
+
+    .filter-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,245,0.12);
+    }
+
+    /* Clear button inside filter */
+    .filter-input::-webkit-search-cancel-button { display: none; }
+
+    .sort-group {
+      display: flex;
+      gap: 3px;
+      margin-left: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+    }
+
+    .sort-btn {
+      height: 26px;
+      padding: 0 10px;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.12s, background 0.12s;
+      white-space: nowrap;
+    }
+
+    .sort-btn:hover  { color: var(--text2); }
+    .sort-btn.active { background: var(--border2); color: var(--text); }
+
+    /* ── Comics grid ─────────────────────────────────────────────────────── */
     #comics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, 150px);
       gap: 20px;
     }
 
-    /* ── Comic card ──────────────────────────────────────────── */
+    /* ── Comic card — full-bleed poster style ────────────────────────────── */
     .comic-card {
       width: 150px;
       height: 300px;
-      border-radius: 6px;
+      border-radius: var(--radius);
       overflow: hidden;
-      background: var(--card);
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
+      display: block;
+      position: relative;
       cursor: pointer;
       text-decoration: none;
-      color: inherit;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-      position: relative;
+      border: 1px solid var(--border);
+      background: var(--card);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
 
     .comic-card:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.25);
-      border-color: rgba(79, 142, 247, 0.45);
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(91,140,245,0.3);
+      border-color: rgba(91,140,245,0.4);
     }
 
     .comic-cover {
-      width: 150px;
-      height: 230px;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       object-position: top center;
       display: block;
-      flex-shrink: 0;
     }
 
+    /* Persistent gradient for title legibility */
+    .comic-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 55%;
+      background: linear-gradient(to top, rgba(8,10,18,0.95) 0%, rgba(8,10,18,0.5) 50%, transparent 100%);
+      z-index: 1;
+      transition: opacity 0.2s;
+    }
+
+    /* Download overlay on hover */
+    .comic-card::after {
+      content: '↓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(91, 140, 245, 0.72);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 3;
+    }
+
+    .comic-card:hover::after { opacity: 1; }
+
     .comic-cover-placeholder {
-      width: 150px;
-      height: 230px;
-      flex-shrink: 0;
-      background: linear-gradient(135deg, #1e2240 0%, #0d1025 100%);
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(145deg, #1a2040 0%, #0d1020 100%);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .comic-cover-placeholder svg {
-      opacity: 0.25;
-    }
+    .comic-cover-placeholder svg { opacity: 0.2; }
 
     .comic-info {
-      flex: 1;
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      background: var(--card);
-      border-top: 1px solid var(--border);
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 10px 10px 10px;
+      z-index: 2;
     }
 
     .comic-title {
       font-size: 0.72rem;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1.35;
-      color: var(--text);
+      color: #fff;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     }
 
-    /* Download badge on hover */
-    .comic-card::after {
-      content: "↓ Download";
-      position: absolute;
-      bottom: 70px;
-      left: 0; right: 0;
-      background: rgba(79, 142, 247, 0.85);
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-align: center;
-      padding: 6px 0;
-      opacity: 0;
-      transition: opacity 0.18s;
-      pointer-events: none;
+    /* ── Skeleton loading cards ──────────────────────────────────────────── */
+    .skeleton-card {
+      width: 150px;
+      height: 300px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: linear-gradient(90deg, var(--card) 25%, var(--surface2) 50%, var(--card) 75%);
+      background-size: 400% 100%;
+      animation: shimmer 1.6s ease infinite;
     }
 
-    .comic-card:hover::after { opacity: 1; }
+    @keyframes shimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
 
-    /* ── Empty state ─────────────────────────────────────────── */
+    /* ── Empty state ─────────────────────────────────────────────────────── */
     #empty-state {
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
       margin-top: 80px;
       color: var(--muted);
       text-align: center;
     }
 
-    #empty-state svg { opacity: 0.3; }
-    #empty-state p { font-size: 0.9rem; }
+    .empty-box {
+      width: 100px;
+      height: 100px;
+      border: 2px dashed var(--border2);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-    /* ── Toast ───────────────────────────────────────────────── */
+    .empty-box svg { opacity: 0.3; }
+
+    #empty-state p {
+      font-size: 0.85rem;
+      color: var(--text2);
+      max-width: 260px;
+      line-height: 1.5;
+    }
+
+    /* ── Toasts ──────────────────────────────────────────────────────────── */
     #toast {
       position: fixed;
       bottom: 24px;
@@ -305,92 +506,114 @@
       flex-direction: column;
       gap: 8px;
       pointer-events: none;
+      max-width: 340px;
     }
 
     .toast-msg {
-      background: var(--surface);
-      border: 1px solid var(--border);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-left: 3px solid var(--accent);
       color: var(--text);
-      padding: 10px 16px;
-      border-radius: 6px;
-      font-size: 0.82rem;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-      animation: slideIn 0.2s ease;
+      padding: 11px 16px;
+      border-radius: var(--radius);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      animation: slideIn 0.22s ease;
       opacity: 1;
       transition: opacity 0.3s;
     }
 
+    .toast-msg.is-error { border-left-color: var(--error); }
     .toast-msg.fade { opacity: 0; }
 
     @keyframes slideIn {
-      from { transform: translateX(40px); opacity: 0; }
+      from { transform: translateX(32px); opacity: 0; }
       to   { transform: translateX(0);   opacity: 1; }
     }
 
-    /* ── Library toolbar ─────────────────────────────────────────────────── */
-    .library-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+    /* ── Responsive — tablet ─────────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .url-form { max-width: 100%; }
+
+      .filter-input { width: 160px; }
+
+      .queue-url { display: none; }
     }
 
-    .library-toolbar .section-heading {
-      margin-bottom: 0;
-      flex-shrink: 0;
+    /* ── Responsive — mobile ─────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      /* Header wraps to two rows: logo row + form row */
+      header {
+        height: auto;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        gap: 10px;
+      }
+
+      .url-form {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+
+      /* Queue */
+      .queue-item { padding: 10px 16px; }
+
+      /* Main */
+      main { padding: 20px 16px; }
+
+      /* Toolbar: heading row then controls row */
+      .library-toolbar { flex-wrap: wrap; row-gap: 10px; }
+
+      .filter-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .filter-input { width: 100%; }
+
+      .sort-group {
+        flex: 0 0 100%;
+        order: 4;
+        margin-left: 0;
+        overflow-x: auto;
+        /* hide scrollbar visually but keep scrollable */
+        scrollbar-width: none;
+      }
+
+      .sort-group::-webkit-scrollbar { display: none; }
+
+      /* Center single-column grid on very small screens */
+      #comics-grid { justify-content: center; gap: 14px; }
+
+      /* Toasts go edge-to-edge */
+      #toast {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        max-width: none;
+      }
     }
-
-    .filter-input {
-      height: 32px;
-      padding: 0 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 0.8rem;
-      outline: none;
-      width: 200px;
-      transition: border-color 0.15s;
-    }
-
-    .filter-input::placeholder { color: var(--muted); }
-    .filter-input:focus { border-color: var(--accent); }
-
-    .sort-group {
-      display: flex;
-      gap: 4px;
-      margin-left: auto;
-    }
-
-    .sort-btn {
-      height: 32px;
-      padding: 0 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
-      white-space: nowrap;
-    }
-
-    .sort-btn:hover { color: var(--text); border-color: var(--accent); }
-    .sort-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(79,142,247,0.08); }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="logo">YOINK<span>.</span></div>
+    <a class="logo" href="/">
+      <div class="logo-icon">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14M5 12l7 7 7-7"/>
+        </svg>
+      </div>
+      <span class="logo-text">YOINK<span>.</span></span>
+    </a>
+
     <form class="url-form" id="url-form">
       <input
         class="url-input"
         id="url-input"
         type="url"
-        placeholder="Paste a comic URL to download..."
+        placeholder="Paste a comic URL to download…"
         required
         autocomplete="off"
         spellcheck="false"
@@ -403,8 +626,16 @@
 
   <main>
     <div class="library-toolbar">
-      <div class="section-heading">Library</div>
-      <input class="filter-input" id="filter-input" type="search" placeholder="Filter by title…" />
+      <span class="section-heading">Library</span>
+      <span class="comic-count" id="comic-count" style="display:none"></span>
+      <div class="filter-wrap">
+        <span class="filter-icon">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+        <input class="filter-input" id="filter-input" type="search" placeholder="Filter by title…" />
+      </div>
       <div class="sort-group">
         <button class="sort-btn active" data-sort="newest">Newest</button>
         <button class="sort-btn" data-sort="oldest">Oldest</button>
@@ -412,15 +643,19 @@
         <button class="sort-btn" data-sort="za">Z–A</button>
       </div>
     </div>
+
     <div id="comics-grid"></div>
+
     <div id="empty-state">
-      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-        <rect x="3" y="3" width="18" height="18" rx="2"/>
-        <path d="M3 9h18M9 21V9"/>
-      </svg>
-      <p>No comics yet — paste a URL above to get started.</p>
+      <div class="empty-box">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M9 21V9"/>
+        </svg>
+      </div>
+      <p>No comics yet — paste a URL above to start building your library.</p>
     </div>
-  </div>
+  </main>
 
   <div id="toast"></div>
 
@@ -428,7 +663,7 @@
     // ── State ──────────────────────────────────────────────────────────────
     let knownJobs     = {};
     let dismissedJobs = JSON.parse(localStorage.getItem('dismissedJobs') || '{}');
-    let allComics     = [];   // raw list from server (newest-first)
+    let allComics     = [];
     let currentSort   = localStorage.getItem('comicSort') || 'newest';
 
     // ── DOM refs ───────────────────────────────────────────────────────────
@@ -441,6 +676,7 @@
     const toastEl     = document.getElementById('toast');
     const filterInput = document.getElementById('filter-input');
     const sortBtns    = document.querySelectorAll('.sort-btn');
+    const countEl     = document.getElementById('comic-count');
 
     // ── Submit handler ─────────────────────────────────────────────────────
     form.addEventListener('submit', async (e) => {
@@ -484,18 +720,18 @@
       }
 
       queue.classList.add('visible');
-
       active.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
       active.forEach(job => {
         const row = document.createElement('div');
         row.className = 'queue-item';
+        row.dataset.status = job.status;
 
-        const statusPill = makeStatusPill(job);
+        const bar = document.createElement('div');
+        bar.className = 'queue-status-bar';
 
         const meta = document.createElement('div');
-        meta.style.flex = '1';
-        meta.style.minWidth = '0';
+        meta.className = 'queue-meta';
 
         const title = document.createElement('div');
         title.className = 'queue-title';
@@ -507,17 +743,19 @@
 
         meta.append(title, urlEl);
 
+        const pill = makeStatusPill(job);
+
         const dismiss = document.createElement('button');
         dismiss.className = 'dismiss-btn';
         dismiss.title = 'Dismiss';
-        dismiss.textContent = '×';
+        dismiss.innerHTML = '&times;';
         dismiss.addEventListener('click', () => {
           dismissedJobs[job.id] = true;
           localStorage.setItem('dismissedJobs', JSON.stringify(dismissedJobs));
           renderQueue();
         });
 
-        row.append(statusPill, meta, dismiss);
+        row.append(bar, meta, pill, dismiss);
         queue.append(row);
       });
     }
@@ -540,15 +778,12 @@
       }[job.status] || job.status;
 
       pill.append(document.createTextNode(label));
-
-      if (job.error) {
-        pill.title = job.error;
-      }
+      if (job.error) pill.title = job.error;
 
       return pill;
     }
 
-    // ── Render comics grid ─────────────────────────────────────────────────
+    // ── Filter & sort ──────────────────────────────────────────────────────
     function applyFilterAndSort() {
       const query = filterInput.value.trim().toLowerCase();
 
@@ -556,7 +791,6 @@
         ? allComics.filter(c => c.title.toLowerCase().includes(query))
         : allComics.slice();
 
-      // Server already sends newest-first; re-sort only when needed
       if (currentSort === 'oldest') {
         comics = comics.slice().reverse();
       } else if (currentSort === 'az') {
@@ -568,15 +802,19 @@
       renderComics(comics);
     }
 
+    // ── Render comics ──────────────────────────────────────────────────────
     function renderComics(comics) {
       grid.innerHTML = '';
 
       if (!comics || comics.length === 0) {
         emptyEl.style.display = 'flex';
+        countEl.style.display = 'none';
         return;
       }
 
       emptyEl.style.display = 'none';
+      countEl.textContent = allComics.length;
+      countEl.style.display = '';
 
       comics.forEach(comic => {
         const a = document.createElement('a');
@@ -620,14 +858,22 @@
       return div;
     }
 
+    function showSkeletons() {
+      grid.innerHTML = '';
+      emptyEl.style.display = 'none';
+      for (let i = 0; i < 10; i++) {
+        const sk = document.createElement('div');
+        sk.className = 'skeleton-card';
+        grid.append(sk);
+      }
+    }
+
     // ── Toast ──────────────────────────────────────────────────────────────
     function toast(msg, isError = false) {
       const el = document.createElement('div');
-      el.className = 'toast-msg';
+      el.className = 'toast-msg' + (isError ? ' is-error' : '');
       el.textContent = msg;
-      if (isError) el.style.borderColor = 'var(--error)';
       toastEl.append(el);
-
       setTimeout(() => {
         el.classList.add('fade');
         setTimeout(() => el.remove(), 350);
@@ -639,27 +885,23 @@
       try {
         const res = await fetch('/api/jobs');
         const jobs = await res.json();
-
         let needComicRefresh = false;
 
         jobs.forEach(job => {
           const prev = knownJobs[job.id];
           if (prev && prev.status !== 'complete' && job.status === 'complete') {
             needComicRefresh = true;
-            toast(`"${job.title}" downloaded successfully`);
+            toast(`"${job.title}" downloaded`);
           }
           if (prev && prev.status !== 'error' && job.status === 'error') {
-            toast(`Error downloading "${job.title || job.url}": ${job.error}`, true);
+            toast(`Failed: ${job.title || job.url}${job.error ? ' — ' + job.error : ''}`, true);
           }
           knownJobs[job.id] = job;
         });
 
         renderQueue();
-
-        if (needComicRefresh) {
-          await fetchComics();
-        }
-      } catch (_) { /* network hiccup — ignore */ }
+        if (needComicRefresh) await fetchComics();
+      } catch (_) {}
     }
 
     async function fetchComics() {
@@ -671,22 +913,21 @@
     }
 
     // ── Init ───────────────────────────────────────────────────────────────
+    sortBtns.forEach(b => {
+      if (b.dataset.sort === currentSort) b.classList.add('active');
+      else b.classList.remove('active');
 
-    // Restore saved sort
-    sortBtns.forEach(btn => {
-      if (btn.dataset.sort === currentSort) btn.classList.add('active');
-      else btn.classList.remove('active');
-
-      btn.addEventListener('click', () => {
-        currentSort = btn.dataset.sort;
+      b.addEventListener('click', () => {
+        currentSort = b.dataset.sort;
         localStorage.setItem('comicSort', currentSort);
-        sortBtns.forEach(b => b.classList.toggle('active', b === btn));
+        sortBtns.forEach(x => x.classList.toggle('active', x === b));
         applyFilterAndSort();
       });
     });
 
     filterInput.addEventListener('input', applyFilterAndSort);
 
+    showSkeletons();
     fetchComics();
     setInterval(pollJobs, 2000);
     setInterval(fetchComics, 10000);
