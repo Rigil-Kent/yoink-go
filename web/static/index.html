@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yoink</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #13151e;
+      --card:      #1a1d2e;
+      --border:    #252840;
+      --accent:    #4f8ef7;
+      --accent-hv: #6aa3ff;
+      --text:      #e2e8f0;
+      --muted:     #6b7280;
+      --success:   #22c55e;
+      --error:     #ef4444;
+      --warn:      #f59e0b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .logo span {
+      color: var(--text);
+    }
+
+    .url-form {
+      flex: 1;
+      display: flex;
+      gap: 0;
+      max-width: 760px;
+    }
+
+    .url-input {
+      flex: 1;
+      height: 40px;
+      padding: 0 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-right: none;
+      border-radius: 6px 0 0 6px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .url-input::placeholder { color: var(--muted); }
+    .url-input:focus { border-color: var(--accent); }
+
+    .url-btn {
+      height: 40px;
+      padding: 0 20px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .url-btn:hover { background: var(--accent-hv); }
+    .url-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Queue strip ─────────────────────────────────────────── */
+    #queue {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: none;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    #queue.visible { display: flex; }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    .queue-item:last-child { border-bottom: none; }
+
+    .queue-title {
+      flex: 1;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .queue-url {
+      color: var(--muted);
+      font-size: 0.75rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 320px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-pill.pending  { background: rgba(107,114,128,0.2); color: var(--muted); }
+    .status-pill.running  { background: rgba(79,142,247,0.15); color: var(--accent); }
+    .status-pill.complete { background: rgba(34,197,94,0.15);  color: var(--success); }
+    .status-pill.error    { background: rgba(239,68,68,0.15);  color: var(--error); }
+
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .dismiss-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+
+    .dismiss-btn:hover { color: var(--text); background: var(--border); }
+
+    /* ── Main grid ───────────────────────────────────────────── */
+    main {
+      padding: 28px 24px;
+    }
+
+    .section-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    #comics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 150px);
+      gap: 20px;
+    }
+
+    /* ── Comic card ──────────────────────────────────────────── */
+    .comic-card {
+      width: 150px;
+      height: 300px;
+      border-radius: 6px;
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+      position: relative;
+    }
+
+    .comic-card:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 32px rgba(79, 142, 247, 0.25);
+      border-color: rgba(79, 142, 247, 0.45);
+    }
+
+    .comic-cover {
+      width: 150px;
+      height: 230px;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .comic-cover-placeholder {
+      width: 150px;
+      height: 230px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #1e2240 0%, #0d1025 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .comic-cover-placeholder svg {
+      opacity: 0.25;
+    }
+
+    .comic-info {
+      flex: 1;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+    }
+
+    .comic-title {
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1.35;
+      color: var(--text);
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+    }
+
+    /* Download badge on hover */
+    .comic-card::after {
+      content: "↓ Download";
+      position: absolute;
+      bottom: 70px;
+      left: 0; right: 0;
+      background: rgba(79, 142, 247, 0.85);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 6px 0;
+      opacity: 0;
+      transition: opacity 0.18s;
+      pointer-events: none;
+    }
+
+    .comic-card:hover::after { opacity: 1; }
+
+    /* ── Empty state ─────────────────────────────────────────── */
+    #empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-top: 80px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    #empty-state svg { opacity: 0.3; }
+    #empty-state p { font-size: 0.9rem; }
+
+    /* ── Toast ───────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-msg {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      animation: slideIn 0.2s ease;
+      opacity: 1;
+      transition: opacity 0.3s;
+    }
+
+    .toast-msg.fade { opacity: 0; }
+
+    @keyframes slideIn {
+      from { transform: translateX(40px); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+
+    /* ── Library toolbar ─────────────────────────────────────────────────── */
+    .library-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .library-toolbar .section-heading {
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    .filter-input {
+      height: 32px;
+      padding: 0 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.8rem;
+      outline: none;
+      width: 200px;
+      transition: border-color 0.15s;
+    }
+
+    .filter-input::placeholder { color: var(--muted); }
+    .filter-input:focus { border-color: var(--accent); }
+
+    .sort-group {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .sort-btn {
+      height: 32px;
+      padding: 0 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .sort-btn:hover { color: var(--text); border-color: var(--accent); }
+    .sort-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(79,142,247,0.08); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">YOINK<span>.</span></div>
+    <form class="url-form" id="url-form">
+      <input
+        class="url-input"
+        id="url-input"
+        type="url"
+        placeholder="Paste a comic URL to download..."
+        required
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button class="url-btn" id="url-btn" type="submit">Download</button>
+    </form>
+  </header>
+
+  <div id="queue"></div>
+
+  <main>
+    <div class="library-toolbar">
+      <div class="section-heading">Library</div>
+      <input class="filter-input" id="filter-input" type="search" placeholder="Filter by title…" />
+      <div class="sort-group">
+        <button class="sort-btn active" data-sort="newest">Newest</button>
+        <button class="sort-btn" data-sort="oldest">Oldest</button>
+        <button class="sort-btn" data-sort="az">A–Z</button>
+        <button class="sort-btn" data-sort="za">Z–A</button>
+      </div>
+    </div>
+    <div id="comics-grid"></div>
+    <div id="empty-state">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <p>No comics yet — paste a URL above to get started.</p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────
+    let knownJobs     = {};
+    let dismissedJobs = JSON.parse(localStorage.getItem('dismissedJobs') || '{}');
+    let allComics     = [];   // raw list from server (newest-first)
+    let currentSort   = localStorage.getItem('comicSort') || 'newest';
+
+    // ── DOM refs ───────────────────────────────────────────────────────────
+    const form        = document.getElementById('url-form');
+    const input       = document.getElementById('url-input');
+    const btn         = document.getElementById('url-btn');
+    const queue       = document.getElementById('queue');
+    const grid        = document.getElementById('comics-grid');
+    const emptyEl     = document.getElementById('empty-state');
+    const toastEl     = document.getElementById('toast');
+    const filterInput = document.getElementById('filter-input');
+    const sortBtns    = document.querySelectorAll('.sort-btn');
+
+    // ── Submit handler ─────────────────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = input.value.trim();
+      if (!url) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Queuing…';
+
+      try {
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const job = await res.json();
+        knownJobs[job.id] = job;
+        input.value = '';
+        toast('Download queued');
+        renderQueue();
+      } catch (err) {
+        toast('Error: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Download';
+      }
+    });
+
+    // ── Render queue ───────────────────────────────────────────────────────
+    function renderQueue() {
+      const active = Object.values(knownJobs).filter(j => !dismissedJobs[j.id]);
+      queue.innerHTML = '';
+
+      if (active.length === 0) {
+        queue.classList.remove('visible');
+        return;
+      }
+
+      queue.classList.add('visible');
+
+      active.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      active.forEach(job => {
+        const row = document.createElement('div');
+        row.className = 'queue-item';
+
+        const statusPill = makeStatusPill(job);
+
+        const meta = document.createElement('div');
+        meta.style.flex = '1';
+        meta.style.minWidth = '0';
+
+        const title = document.createElement('div');
+        title.className = 'queue-title';
+        title.textContent = job.title || 'Fetching…';
+
+        const urlEl = document.createElement('div');
+        urlEl.className = 'queue-url';
+        urlEl.textContent = job.url;
+
+        meta.append(title, urlEl);
+
+        const dismiss = document.createElement('button');
+        dismiss.className = 'dismiss-btn';
+        dismiss.title = 'Dismiss';
+        dismiss.textContent = '×';
+        dismiss.addEventListener('click', () => {
+          dismissedJobs[job.id] = true;
+          localStorage.setItem('dismissedJobs', JSON.stringify(dismissedJobs));
+          renderQueue();
+        });
+
+        row.append(statusPill, meta, dismiss);
+        queue.append(row);
+      });
+    }
+
+    function makeStatusPill(job) {
+      const pill = document.createElement('span');
+      pill.className = 'status-pill ' + job.status;
+
+      if (job.status === 'pending' || job.status === 'running') {
+        const spin = document.createElement('span');
+        spin.className = 'spinner';
+        pill.append(spin);
+      }
+
+      const label = {
+        pending:  'Pending',
+        running:  'Downloading',
+        complete: '✓ Done',
+        error:    '✕ Error',
+      }[job.status] || job.status;
+
+      pill.append(document.createTextNode(label));
+
+      if (job.error) {
+        pill.title = job.error;
+      }
+
+      return pill;
+    }
+
+    // ── Render comics grid ─────────────────────────────────────────────────
+    function applyFilterAndSort() {
+      const query = filterInput.value.trim().toLowerCase();
+
+      let comics = query
+        ? allComics.filter(c => c.title.toLowerCase().includes(query))
+        : allComics.slice();
+
+      // Server already sends newest-first; re-sort only when needed
+      if (currentSort === 'oldest') {
+        comics = comics.slice().reverse();
+      } else if (currentSort === 'az') {
+        comics = comics.slice().sort((a, b) => a.title.localeCompare(b.title));
+      } else if (currentSort === 'za') {
+        comics = comics.slice().sort((a, b) => b.title.localeCompare(a.title));
+      }
+
+      renderComics(comics);
+    }
+
+    function renderComics(comics) {
+      grid.innerHTML = '';
+
+      if (!comics || comics.length === 0) {
+        emptyEl.style.display = 'flex';
+        return;
+      }
+
+      emptyEl.style.display = 'none';
+
+      comics.forEach(comic => {
+        const a = document.createElement('a');
+        a.className = 'comic-card';
+        a.href = comic.file_url;
+
+        if (comic.cover_url) {
+          const img = document.createElement('img');
+          img.className = 'comic-cover';
+          img.src = comic.cover_url;
+          img.alt = comic.title;
+          img.loading = 'lazy';
+          img.onerror = () => img.replaceWith(makePlaceholder());
+          a.append(img);
+        } else {
+          a.append(makePlaceholder());
+        }
+
+        const info = document.createElement('div');
+        info.className = 'comic-info';
+
+        const title = document.createElement('div');
+        title.className = 'comic-title';
+        title.textContent = comic.title;
+
+        info.append(title);
+        a.append(info);
+        grid.append(a);
+      });
+    }
+
+    function makePlaceholder() {
+      const div = document.createElement('div');
+      div.className = 'comic-cover-placeholder';
+      div.innerHTML = `
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M9 21V9"/>
+        </svg>`;
+      return div;
+    }
+
+    // ── Toast ──────────────────────────────────────────────────────────────
+    function toast(msg, isError = false) {
+      const el = document.createElement('div');
+      el.className = 'toast-msg';
+      el.textContent = msg;
+      if (isError) el.style.borderColor = 'var(--error)';
+      toastEl.append(el);
+
+      setTimeout(() => {
+        el.classList.add('fade');
+        setTimeout(() => el.remove(), 350);
+      }, 3500);
+    }
+
+    // ── Polling ────────────────────────────────────────────────────────────
+    async function pollJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        const jobs = await res.json();
+
+        let needComicRefresh = false;
+
+        jobs.forEach(job => {
+          const prev = knownJobs[job.id];
+          if (prev && prev.status !== 'complete' && job.status === 'complete') {
+            needComicRefresh = true;
+            toast(`"${job.title}" downloaded successfully`);
+          }
+          if (prev && prev.status !== 'error' && job.status === 'error') {
+            toast(`Error downloading "${job.title || job.url}": ${job.error}`, true);
+          }
+          knownJobs[job.id] = job;
+        });
+
+        renderQueue();
+
+        if (needComicRefresh) {
+          await fetchComics();
+        }
+      } catch (_) { /* network hiccup — ignore */ }
+    }
+
+    async function fetchComics() {
+      try {
+        const res = await fetch('/api/comics');
+        allComics = await res.json();
+        applyFilterAndSort();
+      } catch (_) {}
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+
+    // Restore saved sort
+    sortBtns.forEach(btn => {
+      if (btn.dataset.sort === currentSort) btn.classList.add('active');
+      else btn.classList.remove('active');
+
+      btn.addEventListener('click', () => {
+        currentSort = btn.dataset.sort;
+        localStorage.setItem('comicSort', currentSort);
+        sortBtns.forEach(b => b.classList.toggle('active', b === btn));
+        applyFilterAndSort();
+      });
+    });
+
+    filterInput.addEventListener('input', applyFilterAndSort);
+
+    fetchComics();
+    setInterval(pollJobs, 2000);
+    setInterval(fetchComics, 10000);
+  </script>
+</body>
+</html>

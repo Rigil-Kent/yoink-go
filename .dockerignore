@@ -1,0 +1,5 @@
+.git
+.github
+*.md
+library/
+*_test.go

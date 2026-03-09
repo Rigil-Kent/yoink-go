@@ -20,3 +20,14 @@ go.work.sum
 
 # env file
 .env
+
+# Built binary
+yoink
+yoink.exe
+
+# Comic library (downloaded content)
+library/
+
+# IDE
+.vscode/
+.idea/

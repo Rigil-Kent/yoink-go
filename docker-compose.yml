@@ -1,0 +1,10 @@
+services:
+  yoink:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./library:/library
+    environment:
+      - YOINK_LIBRARY=/library
+    restart: unless-stopped
