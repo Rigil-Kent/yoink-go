@@ -59,6 +59,8 @@ The comic title is extracted from the page and used to name the archive. Output 
 
 Yoink includes a self-hosted web interface for browsing and downloading comics from your browser.
 
+![Yoink Web UI](Screenshot_01.png)
+
 ### Running directly
 
 ```shell
