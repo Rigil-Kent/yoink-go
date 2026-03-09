@@ -39,6 +39,8 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 14px;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Subtle dot grid background */
@@ -256,7 +258,7 @@
     .dismiss-btn:hover { color: var(--text); background: var(--border); }
 
     /* ── Main ────────────────────────────────────────────────────────────── */
-    main { padding: 32px 28px; }
+    main { padding: 32px 28px; flex: 1; }
 
     /* ── Library toolbar ─────────────────────────────────────────────────── */
     .library-toolbar {
@@ -400,15 +402,12 @@
     }
 
     /* Download overlay on hover */
-    .comic-card::after {
-      content: '↓';
+    .comic-download-overlay {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
-      font-weight: 700;
       color: #fff;
       background: rgba(91, 140, 245, 0.72);
       backdrop-filter: blur(3px);
@@ -418,7 +417,7 @@
       z-index: 3;
     }
 
-    .comic-card:hover::after { opacity: 1; }
+    .comic-card:hover .comic-download-overlay { opacity: 1; }
 
     .comic-cover-placeholder {
       width: 100%;
@@ -430,6 +429,15 @@
     }
 
     .comic-cover-placeholder svg { opacity: 0.2; }
+
+    .comic-cover-placeholder .placeholder-initials {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.18);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      user-select: none;
+    }
 
     .comic-info {
       position: absolute;
@@ -534,6 +542,20 @@
       line-height: 1.5;
     }
 
+    .empty-hint {
+      font-size: 0.76rem !important;
+      font-style: italic;
+      color: var(--muted) !important;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .empty-hint svg {
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+
     /* ── Toasts ──────────────────────────────────────────────────────────── */
     #toast {
       position: fixed;
@@ -565,10 +587,39 @@
     .toast-msg.is-error { border-left-color: var(--error); }
     .toast-msg.fade { opacity: 0; }
 
+    .toast-icon {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      margin-right: 7px;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+    }
+
     @keyframes slideIn {
       from { transform: translateX(32px); opacity: 0; }
       to   { transform: translateX(0);   opacity: 1; }
     }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 14px 28px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    footer a:hover { color: var(--text2); }
 
     /* ── Responsive — tablet ─────────────────────────────────────────────── */
     @media (max-width: 860px) {
@@ -693,8 +744,19 @@
         </svg>
       </div>
       <p>No comics yet — paste a URL above to start building your library.</p>
+      <p class="empty-hint">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+        Your downloaded comics will appear here
+      </p>
     </div>
   </main>
+
+  <footer>
+    <a href="https://github.com/brizzbuzz/yoink-go" target="_blank" rel="noopener">Yoink</a>
+    &nbsp;&middot;&nbsp; v1.1.0
+  </footer>
 
   <div id="toast"></div>
 
@@ -917,11 +979,18 @@
           img.src = comic.cover_url;
           img.alt = comic.title;
           img.loading = 'lazy';
-          img.onerror = () => img.replaceWith(makePlaceholder());
+          img.onerror = () => img.replaceWith(makePlaceholder(comic.title));
           a.append(img);
         } else {
-          a.append(makePlaceholder());
+          a.append(makePlaceholder(comic.title));
         }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'comic-download-overlay';
+        overlay.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v13M5 14l7 7 7-7"/><path d="M3 21h18"/>
+        </svg>`;
+        a.append(overlay);
 
         const info = document.createElement('div');
         info.className = 'comic-info';
@@ -936,15 +1005,26 @@
       });
     }
 
-    function makePlaceholder() {
+    function makePlaceholder(title) {
       const div = document.createElement('div');
       div.className = 'comic-cover-placeholder';
-      div.innerHTML = `
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M3 9h18M9 21V9"/>
-        </svg>`;
+      if (title) {
+        const words = title.trim().split(/\s+/).filter(Boolean);
+        const initials = words.length === 1
+          ? words[0].slice(0, 2)
+          : (words[0][0] + words[1][0]);
+        const span = document.createElement('span');
+        span.className = 'placeholder-initials';
+        span.textContent = initials.toUpperCase();
+        div.append(span);
+      } else {
+        div.innerHTML = `
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>`;
+      }
       return div;
     }
 
@@ -962,7 +1042,20 @@
     function toast(msg, isError = false) {
       const el = document.createElement('div');
       el.className = 'toast-msg' + (isError ? ' is-error' : '');
-      el.textContent = msg;
+
+      const icon = document.createElement('span');
+      icon.className = 'toast-icon';
+      if (isError) {
+        icon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+        </svg>`;
+      } else {
+        icon.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/>
+        </svg>`;
+      }
+
+      el.append(icon, document.createTextNode(msg));
       toastEl.append(el);
       setTimeout(() => {
         el.classList.add('fade');
