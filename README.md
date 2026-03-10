@@ -99,6 +99,8 @@ The web UI is then available at `http://localhost:8080`.
 
 #### Packaging local images
 
+![Local packaging panel](Screenshot_02.png)
+
 Click the upload icon (↑) in the header to open the packaging panel. Enter a title, then either:
 
 - **Drag and drop** a folder or image files onto the drop zone
