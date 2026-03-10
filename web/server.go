@@ -1,9 +1,11 @@
 package web
 
 import (
+	"archive/zip"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -72,6 +74,7 @@ func (s *Server) Handler() http.Handler {
 
 	// API
 	mux.HandleFunc("/api/download", s.handleDownload)
+	mux.HandleFunc("/api/upload", s.handleUpload)
 	mux.HandleFunc("/api/comics", s.handleComics)
 	mux.HandleFunc("/api/jobs", s.handleJobs)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -238,6 +241,114 @@ func (s *Server) handleJobs(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(jobs)
+}
+
+func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 500 MB limit
+	if err := r.ParseMultipartForm(500 << 20); err != nil {
+		http.Error(w, "request too large", http.StatusRequestEntityTooLarge)
+		return
+	}
+
+	title := strings.TrimSpace(r.FormValue("title"))
+	if title == "" {
+		http.Error(w, "title required", http.StatusBadRequest)
+		return
+	}
+	// Sanitize: no path separators or shell-special characters
+	title = filepath.Base(title)
+	title = strings.Map(func(r rune) rune {
+		if strings.ContainsRune(`/\:*?"<>|`, r) {
+			return '_'
+		}
+		return r
+	}, title)
+
+	fileHeaders := r.MultipartForm.File["images"]
+	if len(fileHeaders) == 0 {
+		http.Error(w, "no images provided", http.StatusBadRequest)
+		return
+	}
+
+	// Sort by original filename so page order is preserved
+	sort.Slice(fileHeaders, func(i, j int) bool {
+		return fileHeaders[i].Filename < fileHeaders[j].Filename
+	})
+
+	dir := filepath.Join(s.libraryPath, title)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		http.Error(w, "failed to create directory", http.StatusInternalServerError)
+		return
+	}
+
+	cbzPath := filepath.Join(dir, title+".cbz")
+	cbzFile, err := os.Create(cbzPath)
+	if err != nil {
+		http.Error(w, "failed to create archive", http.StatusInternalServerError)
+		return
+	}
+	defer cbzFile.Close()
+
+	zw := zip.NewWriter(cbzFile)
+	defer zw.Close()
+
+	imageExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	idx := 1
+
+	for _, fh := range fileHeaders {
+		ext := strings.ToLower(filepath.Ext(fh.Filename))
+		if !imageExts[ext] {
+			continue
+		}
+		if ext == ".jpeg" {
+			ext = ".jpg"
+		}
+
+		entryName := fmt.Sprintf("%03d%s", idx, ext)
+
+		src, err := fh.Open()
+		if err != nil {
+			continue
+		}
+
+		// Save first image as cover: "<Title> 001.jpg"
+		if idx == 1 {
+			coverPath := filepath.Join(dir, title+" "+entryName)
+			if cf, err := os.Create(coverPath); err == nil {
+				io.Copy(cf, src)
+				cf.Close()
+				src.Close()
+				src, err = fh.Open()
+				if err != nil {
+					continue
+				}
+			}
+		}
+
+		ze, err := zw.Create(entryName)
+		if err != nil {
+			src.Close()
+			continue
+		}
+		io.Copy(ze, src)
+		src.Close()
+		idx++
+	}
+
+	if idx == 1 {
+		// Nothing was written — no valid images
+		os.RemoveAll(dir)
+		http.Error(w, "no valid images in upload", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"title": title, "status": "complete"})
 }
 
 func Listen(addr string, libraryPath string) error {

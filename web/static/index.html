@@ -587,6 +587,206 @@
     .toast-msg.is-error { border-left-color: var(--error); }
     .toast-msg.fade { opacity: 0; }
 
+    /* ── Upload button ───────────────────────────────────────────────────── */
+    .upload-btn {
+      height: 36px;
+      width: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .upload-btn:hover { background: var(--border); border-color: var(--border2); color: var(--text); }
+
+    /* ── Upload modal ────────────────────────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      padding: 28px;
+      width: 480px;
+      max-width: calc(100vw - 32px);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      transform: translateY(12px);
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .modal-backdrop.open .modal { transform: translateY(0); }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.12s, background 0.12s;
+    }
+
+    .modal-close:hover { color: var(--text); background: var(--border); }
+
+    .upload-title-input {
+      width: 100%;
+      height: 38px;
+      padding: 0 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .upload-title-input::placeholder { color: var(--muted); }
+
+    .upload-title-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,140,245,0.15);
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--text2);
+    }
+
+    .drop-zone svg { opacity: 0.5; }
+    .drop-zone.drag-over svg { opacity: 0.8; }
+
+    .drop-zone-label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text2);
+    }
+
+    .drop-zone-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .drop-zone-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .pick-btn {
+      height: 30px;
+      padding: 0 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text2);
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.12s, color 0.12s, background 0.12s;
+    }
+
+    .pick-btn:hover { border-color: var(--accent); color: var(--text); background: var(--accent-dim); }
+
+    .file-count {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+      min-height: 1.2em;
+    }
+
+    .upload-progress {
+      height: 3px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .upload-progress-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.2s;
+    }
+
+    .modal-submit {
+      height: 40px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .modal-submit:hover  { background: var(--accent-hv); }
+    .modal-submit:active { transform: scale(0.98); }
+    .modal-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
     .toast-icon {
       display: inline-flex;
       align-items: center;
@@ -709,7 +909,45 @@
       />
       <button class="url-btn" id="url-btn" type="submit">Download</button>
     </form>
+
+    <button class="upload-btn" id="upload-open-btn" title="Package local images as CBZ">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    </button>
   </header>
+
+  <!-- Upload modal -->
+  <div class="modal-backdrop" id="upload-modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-label">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title-label">Package images as CBZ</span>
+        <button class="modal-close" id="upload-close-btn" aria-label="Close">&times;</button>
+      </div>
+
+      <input class="upload-title-input" id="upload-title" type="text" placeholder="Comic title…" autocomplete="off" />
+
+      <div class="drop-zone" id="drop-zone">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M3 9h18M9 21V9"/>
+        </svg>
+        <span class="drop-zone-label">Drop images or a folder here</span>
+        <span class="drop-zone-sub">JPG, PNG, WebP — sorted by filename</span>
+        <div class="drop-zone-actions">
+          <button class="pick-btn" id="pick-folder-btn" type="button">Select folder</button>
+          <button class="pick-btn" id="pick-files-btn" type="button">Select files</button>
+        </div>
+      </div>
+
+      <div class="file-count" id="file-count"></div>
+      <div class="upload-progress" id="upload-progress"><div class="upload-progress-bar" id="upload-progress-bar"></div></div>
+
+      <button class="modal-submit" id="upload-submit-btn" disabled>Package &amp; add to library</button>
+    </div>
+  </div>
 
   <div id="queue"></div>
 
@@ -759,6 +997,10 @@
   </footer>
 
   <div id="toast"></div>
+
+  <!-- Hidden file inputs for upload modal -->
+  <input type="file" id="file-input-folder" style="display:none" multiple webkitdirectory />
+  <input type="file" id="file-input-files" style="display:none" multiple accept="image/*" />
 
   <script>
     // ── State ──────────────────────────────────────────────────────────────
@@ -1114,6 +1356,155 @@
     fetchComics();
     setInterval(pollJobs, 2000);
     setInterval(fetchComics, 10000);
+
+    // ── Upload modal ───────────────────────────────────────────────────────
+    const uploadModal      = document.getElementById('upload-modal');
+    const uploadOpenBtn    = document.getElementById('upload-open-btn');
+    const uploadCloseBtn   = document.getElementById('upload-close-btn');
+    const uploadTitleInput = document.getElementById('upload-title');
+    const dropZone         = document.getElementById('drop-zone');
+    const pickFolderBtn    = document.getElementById('pick-folder-btn');
+    const pickFilesBtn     = document.getElementById('pick-files-btn');
+    const fileInputFolder  = document.getElementById('file-input-folder');
+    const fileInputFiles   = document.getElementById('file-input-files');
+    const fileCountEl      = document.getElementById('file-count');
+    const uploadProgress   = document.getElementById('upload-progress');
+    const uploadProgressBar= document.getElementById('upload-progress-bar');
+    const uploadSubmitBtn  = document.getElementById('upload-submit-btn');
+
+    let pendingFiles = [];
+
+    const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+
+    function isImage(name) {
+      const ext = name.slice(name.lastIndexOf('.')).toLowerCase();
+      return IMAGE_EXTS.has(ext);
+    }
+
+    function setFiles(fileList) {
+      const imgs = Array.from(fileList).filter(f => isImage(f.name));
+      imgs.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+      pendingFiles = imgs;
+      fileCountEl.textContent = imgs.length
+        ? `${imgs.length} image${imgs.length !== 1 ? 's' : ''} selected`
+        : '';
+      uploadSubmitBtn.disabled = imgs.length === 0 || !uploadTitleInput.value.trim();
+    }
+
+    function openModal() {
+      uploadModal.classList.add('open');
+      uploadTitleInput.focus();
+    }
+
+    function closeModal() {
+      uploadModal.classList.remove('open');
+      pendingFiles = [];
+      fileCountEl.textContent = '';
+      uploadTitleInput.value = '';
+      uploadSubmitBtn.disabled = true;
+      uploadProgress.style.display = 'none';
+      uploadProgressBar.style.width = '0%';
+      fileInputFolder.value = '';
+      fileInputFiles.value = '';
+    }
+
+    uploadOpenBtn.addEventListener('click', openModal);
+    uploadCloseBtn.addEventListener('click', closeModal);
+    uploadModal.addEventListener('click', e => { if (e.target === uploadModal) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && uploadModal.classList.contains('open')) closeModal(); });
+
+    pickFolderBtn.addEventListener('click', () => fileInputFolder.click());
+    pickFilesBtn.addEventListener('click',  () => fileInputFiles.click());
+
+    fileInputFolder.addEventListener('change', e => {
+      // Auto-fill title from folder name via webkitRelativePath
+      const files = Array.from(e.target.files);
+      if (files.length && !uploadTitleInput.value.trim()) {
+        const rel = files[0].webkitRelativePath;
+        if (rel) uploadTitleInput.value = rel.split('/')[0];
+      }
+      setFiles(e.target.files);
+    });
+
+    fileInputFiles.addEventListener('change', e => setFiles(e.target.files));
+
+    uploadTitleInput.addEventListener('input', () => {
+      uploadSubmitBtn.disabled = pendingFiles.length === 0 || !uploadTitleInput.value.trim();
+    });
+
+    // Drag & drop
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+
+      const collected = [];
+      const entries = Array.from(e.dataTransfer.items)
+        .filter(i => i.kind === 'file')
+        .map(i => i.webkitGetAsEntry());
+
+      async function readEntry(entry) {
+        if (entry.isFile) {
+          await new Promise(res => entry.file(f => { collected.push(f); res(); }));
+        } else if (entry.isDirectory) {
+          if (!uploadTitleInput.value.trim()) uploadTitleInput.value = entry.name;
+          const reader = entry.createReader();
+          await new Promise(res => reader.readEntries(async entries => {
+            for (const e of entries) await readEntry(e);
+            res();
+          }));
+        }
+      }
+
+      for (const entry of entries) if (entry) await readEntry(entry);
+      setFiles(collected);
+    });
+
+    // Submit
+    uploadSubmitBtn.addEventListener('click', async () => {
+      const title = uploadTitleInput.value.trim();
+      if (!title || pendingFiles.length === 0) return;
+
+      uploadSubmitBtn.disabled = true;
+      uploadProgress.style.display = 'block';
+
+      const form = new FormData();
+      form.append('title', title);
+      pendingFiles.forEach(f => form.append('images', f, f.name));
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) {
+          uploadProgressBar.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status === 200) {
+          toast(`"${title}" added to library`);
+          closeModal();
+          fetchComics();
+        } else {
+          toast('Upload failed: ' + xhr.responseText, true);
+          uploadSubmitBtn.disabled = false;
+          uploadProgress.style.display = 'none';
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        toast('Upload failed', true);
+        uploadSubmitBtn.disabled = false;
+        uploadProgress.style.display = 'none';
+      });
+
+      xhr.send(form);
+    });
   </script>
 </body>
 </html>
