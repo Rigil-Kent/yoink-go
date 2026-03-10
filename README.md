@@ -1,6 +1,6 @@
 # yoink
 
-A tool for downloading comics from readallcomics.com and packaging them as `.cbz` archives. Available as a CLI command or a self-hosted web application.
+A tool for downloading comics from readallcomics.com and packaging them as `.cbz` archives. Available as a CLI command or a self-hosted web application. The web UI also lets you package local image folders into `.cbz` archives directly from your browser.
 
 ## How it works
 
@@ -92,9 +92,20 @@ The web UI is then available at `http://localhost:8080`.
 ### Features
 
 - **Download queue** — paste a comic URL into the input bar and track download progress in real time
-- **Library grid** — browse your downloaded comics as a 150×300 cover grid
+- **Local packaging** — drag and drop a folder of images (or use the file picker) to package them as a `.cbz` archive and add it to your library without downloading anything
+- **Library grid** — browse your comics as a 150×300 cover grid with title-initial placeholders for missing covers
 - **Filter & sort** — filter by title and sort by newest, oldest, A–Z, or Z–A
 - **One-click download** — click any cover to download the `.cbz` archive directly
+
+#### Packaging local images
+
+Click the upload icon (↑) in the header to open the packaging panel. Enter a title, then either:
+
+- **Drag and drop** a folder or image files onto the drop zone
+- **Select folder** to pick an entire directory at once
+- **Select files** to pick individual images
+
+Images are sorted by filename, the first image is used as the cover, and the result is saved to your library as `<Title>/<Title>.cbz`.
 
 ### Library volume
 
