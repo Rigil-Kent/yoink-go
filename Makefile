@@ -32,7 +32,9 @@ docker-push: docker-build
 tag:
 	@if [ -z "$(VERSION)" ]; then echo "Usage: make tag VERSION=1.2.0"; exit 1; fi
 	git tag $(VERSION)
+	git tag -f latest
 	git push origin $(VERSION)
+	git push origin -f latest
 
 gitea-release:
 	tea release create \
