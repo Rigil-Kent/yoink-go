@@ -26,21 +26,52 @@ type Comic struct {
 // Returns the extracted title as a string.
 func extractTitleFromMarkup(c Comic) string {
 	yearFormat := `^(.*?)\s+\(\d{4}(?:\s+.+)?\)`
-	selection := c.Markup.Find("title")
-
-	if selection.Length() == 0 {
-		return "Untitled"
-	}
-
-	content := selection.First().Text()
 	regex := regexp.MustCompile(yearFormat)
-	matches := regex.FindStringSubmatch(content)
 
-	if len(matches) != 2 {
-		return "Untitled"
+	extractFrom := func(text string) string {
+		matches := regex.FindStringSubmatch(text)
+		if len(matches) != 2 {
+			return ""
+		}
+		return strings.ReplaceAll(matches[1], ":", "")
 	}
 
-	return strings.ReplaceAll(matches[1], ":", "")
+	title := extractFrom(c.Markup.Find("title").First().Text())
+
+	if strings.HasPrefix(title, "#") {
+		if h1 := extractFrom(c.Markup.Find("h1").First().Text()); h1 != "" && !strings.HasPrefix(h1, "#") {
+			return h1
+		}
+		if slug := titleFromSlug(c.URL); slug != "" {
+			return slug
+		}
+	}
+
+	if title != "" {
+		return title
+	}
+
+	return "Untitled"
+}
+
+// titleFromSlug derives a comic title from the last path segment of a URL.
+// It strips a trailing year (-YYYY), replaces hyphens with spaces, and title-cases the result.
+func titleFromSlug(url string) string {
+	slug := strings.TrimRight(url, "/")
+	if i := strings.LastIndex(slug, "/"); i >= 0 {
+		slug = slug[i+1:]
+	}
+	slug = regexp.MustCompile(`-\d{4}$`).ReplaceAllString(slug, "")
+	if slug == "" {
+		return ""
+	}
+	words := strings.Split(slug, "-")
+	for i, w := range words {
+		if len(w) > 0 {
+			words[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
 }
 
 // NewComic creates a new Comic instance from the provided URL and library path.
@@ -61,13 +92,21 @@ func NewComic(
 		LibraryPath: libraryPath,
 	}
 
-	go Markup(c.URL, markupChannel)
+	if strings.Contains(url, "batcave.biz") {
+		go BatcaveBizMarkup(url, markupChannel)
+	} else {
+		go Markup(url, markupChannel)
+	}
 
 	markup := <-markupChannel
 	c.Markup = markup
 	c.Title = extractTitleFromMarkup(*c)
 
-	go ParseImageLinks(markup, imageChannel)
+	if strings.Contains(url, "batcave.biz") {
+		go ParseBatcaveBizImageLinks(markup, imageChannel)
+	} else {
+		go ParseImageLinks(markup, imageChannel)
+	}
 	links := <-imageChannel
 
 	c.Filelist = links
