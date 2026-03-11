@@ -47,7 +47,7 @@ var cli = &cobra.Command{
 		comic.Archive()
 		comic.Cleanup()
 	},
-	Version: "1.1.0",
+	Version: "1.2.1",
 }
 
 func Execute() error {
