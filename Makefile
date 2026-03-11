@@ -38,7 +38,7 @@ gitea-release:
 	tea release create \
 		--tag $(VERSION) \
 		--title "$(VERSION)" \
-		--note $(NOTES) \
+		$(if $(NOTES),--note $(NOTES),) \
 		--asset $(BUILD_DIR)/$(BIN)-windows-amd64.exe \
 		--asset $(BUILD_DIR)/$(BIN)-linux-amd64 \
 		--asset $(BUILD_DIR)/$(BIN)-linux-arm64 \
