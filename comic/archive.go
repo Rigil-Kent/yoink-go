@@ -45,7 +45,7 @@ func (c *Comic) Archive() error {
 	sourcePath := filepath.Join(c.LibraryPath, c.Title)
 
 	err = filepath.Walk(
-		filepath.Dir(sourcePath),
+		sourcePath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return ArchiveError{

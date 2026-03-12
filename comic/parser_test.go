@@ -25,6 +25,15 @@ func TestParseBatcaveBizImageLinks(t *testing.T) {
 			expectURLs:  []string{"https://cdn.batcave.biz/img/001.jpg", "https://cdn.batcave.biz/img/002.jpg"},
 		},
 		{
+			name: "unescapes forward slashes in URLs",
+			html: `<html><body><script>
+				var __DATA__ = {"images":["https:\/\/cdn.batcave.biz\/img\/001.jpg"]};
+			</script></body></html>`,
+			expectCount: 1,
+			expectErr:   false,
+			expectURLs:  []string{"https://cdn.batcave.biz/img/001.jpg"},
+		},
+		{
 			name: "extracts images with spaces around colon and bracket",
 			html: `<html><body><script>
 				var __DATA__ = {"images" : [ "https://cdn.batcave.biz/img/001.jpg" ]};

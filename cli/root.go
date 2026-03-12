@@ -40,7 +40,7 @@ var cli = &cobra.Command{
 		fmt.Println(comic.Title)
 
 		err := comic.Download(len(comic.Filelist))
-		for e := range err {
+		for _, e := range err {
 			fmt.Println(e)
 		}
 

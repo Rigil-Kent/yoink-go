@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -50,10 +51,21 @@ func Markup(url string, c chan *goquery.Document) *goquery.Document {
 	return markup
 }
 
-func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Document {
+func BatcaveBizMarkup(referer string, c chan *goquery.Document, clientChan chan *http.Client) *goquery.Document {
+	sendErr := func() *goquery.Document {
+		if c != nil {
+			c <- &goquery.Document{}
+		}
+		if clientChan != nil {
+			clientChan <- nil
+		}
+		return &goquery.Document{}
+	}
+
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
-		Jar: jar,
+		Jar:     jar,
+		Timeout: time.Second * 30,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return nil
 		},
@@ -68,10 +80,7 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 	// GET the challange page to obtain cookies and any necessary tokens
 	req, err := http.NewRequest("GET", referer, nil)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	for k, v := range headers {
 		req.Header.Set(k, v)
@@ -79,19 +88,13 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 
 	res, err := client.Do(req)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 
 	tokenRegex := regexp.MustCompile(`token:\s*"([^"]+)"`)
@@ -101,13 +104,13 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 		//  no challenge, parse directly
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(body)))
 		if err != nil {
-			if c != nil {
-				c <- &goquery.Document{}
-			}
-			return &goquery.Document{}
+			return sendErr()
 		}
 		if c != nil {
 			c <- doc
+		}
+		if clientChan != nil {
+			clientChan <- client
 		}
 		return doc
 	}
@@ -132,10 +135,7 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 
 	postReq, err := http.NewRequest("POST", "https://batcave.biz/_v", strings.NewReader(params.Encode()))
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	for k, v := range headers {
 		postReq.Header.Set(k, v)
@@ -145,10 +145,7 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 
 	postRes, err := client.Do(postReq)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	defer postRes.Body.Close()
 	io.ReadAll(postRes.Body)
@@ -156,10 +153,7 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 	// GET the real page with the set cookie
 	realReq, err := http.NewRequest("GET", referer, nil)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	for k, v := range headers {
 		realReq.Header.Set(k, v)
@@ -167,22 +161,19 @@ func BatcaveBizMarkup(referer string, c chan *goquery.Document) *goquery.Documen
 
 	realRes, err := client.Do(realReq)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	defer realRes.Body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(realRes.Body)
 	if err != nil {
-		if c != nil {
-			c <- &goquery.Document{}
-		}
-		return &goquery.Document{}
+		return sendErr()
 	}
 	if c != nil {
 		c <- doc
+	}
+	if clientChan != nil {
+		clientChan <- client
 	}
 	return doc
 }
@@ -228,6 +219,34 @@ func ParseReadAllComicsLinks(markup *goquery.Document, c chan []string) ([]strin
 	return links, ImageParseError{Message: "No images found", Code: 1}
 }
 
+// ParseBatcaveBizTitle extracts the chapter title from the __DATA__.chapters array
+// by matching the chapter id to the last path segment of the provided URL.
+func ParseBatcaveBizTitle(markup *goquery.Document, chapterURL string) string {
+	slug := strings.TrimRight(chapterURL, "/")
+	if i := strings.LastIndex(slug, "/"); i >= 0 {
+		slug = slug[i+1:]
+	}
+
+	var title string
+	markup.Find("script").Each(func(_ int, s *goquery.Selection) {
+		if title != "" {
+			return
+		}
+		text := s.Text()
+		if !strings.Contains(text, "__DATA__") {
+			return
+		}
+		chapterRegex := regexp.MustCompile(`"id"\s*:\s*` + regexp.QuoteMeta(slug) + `[^}]*?"title"\s*:\s*"([^"]+)"`)
+		m := chapterRegex.FindStringSubmatch(text)
+		if len(m) >= 2 {
+			title = strings.ReplaceAll(m[1], `\/`, "/")
+			title = strings.ReplaceAll(title, "Issue #", "")
+			title = strings.ReplaceAll(title, "#", "")
+		}
+	})
+	return title
+}
+
 // ParseBatcaveBizImageLinks extracts image URLs from the __DATA__.images JavaScript
 // variable embedded in a batcave.biz page.
 func ParseBatcaveBizImageLinks(markup *goquery.Document, c chan []string) ([]string, error) {
@@ -248,7 +267,7 @@ func ParseBatcaveBizImageLinks(markup *goquery.Document, c chan []string) ([]str
 		urlRegex := regexp.MustCompile(`"([^"]+)"`)
 		for _, m := range urlRegex.FindAllStringSubmatch(arrayMatch[1], -1) {
 			if len(m) >= 2 {
-				links = append(links, m[1])
+				links = append(links, strings.ReplaceAll(m[1], `\/`, "/"))
 			}
 		}
 	})

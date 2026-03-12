@@ -1,6 +1,7 @@
 package comic
 
 import (
+	"net/http"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -18,6 +19,7 @@ type Comic struct {
 	Next        *Comic
 	Prev        *Comic
 	LibraryPath string
+	Client      *http.Client
 }
 
 // extractTitleFromMarkup extracts the title from the comic's markup.
@@ -93,18 +95,22 @@ func NewComic(
 	}
 
 	if strings.Contains(url, "batcave.biz") {
-		go BatcaveBizMarkup(url, markupChannel)
-	} else {
-		go Markup(url, markupChannel)
-	}
-
-	markup := <-markupChannel
-	c.Markup = markup
-	c.Title = extractTitleFromMarkup(*c)
-
-	if strings.Contains(url, "batcave.biz") {
+		clientChan := make(chan *http.Client, 1)
+		go BatcaveBizMarkup(url, markupChannel, clientChan)
+		markup := <-markupChannel
+		c.Markup = markup
+		c.Client = <-clientChan
+		if t := ParseBatcaveBizTitle(markup, url); t != "" {
+			c.Title = t
+		} else {
+			c.Title = extractTitleFromMarkup(*c)
+		}
 		go ParseBatcaveBizImageLinks(markup, imageChannel)
 	} else {
+		go Markup(url, markupChannel)
+		markup := <-markupChannel
+		c.Markup = markup
+		c.Title = extractTitleFromMarkup(*c)
 		go ParseImageLinks(markup, imageChannel)
 	}
 	links := <-imageChannel

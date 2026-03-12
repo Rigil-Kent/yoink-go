@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	cloudflarebp "github.com/DaRealFreak/cloudflare-bp-go"
@@ -39,10 +40,30 @@ func downloadFile(url string, page int, c *Comic) error {
 		}
 	}
 
-	res, err := handleRequest(url)
+	var res *http.Response
+	var err error
+	if c.Client != nil {
+		req, reqErr := http.NewRequest("GET", url, nil)
+		if reqErr != nil {
+			return ComicDownloadError{Message: "invalid request", Code: 1}
+		}
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+		if strings.Contains(url, "batcave.biz") {
+			req.Header.Set("Referer", "https://batcave.biz/")
+		}
+		res, err = c.Client.Do(req)
+	} else {
+		res, err = handleRequest(url)
+	}
 	if err != nil {
 		return ComicDownloadError{
 			Message: "invalid request",
+			Code:    1,
+		}
+	}
+	if res.StatusCode != http.StatusOK {
+		return ComicDownloadError{
+			Message: "bad response",
 			Code:    1,
 		}
 	}
