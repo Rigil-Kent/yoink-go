@@ -1,6 +1,6 @@
 # yoink
 
-A tool for downloading comics from readallcomics.com and packaging them as `.cbz` archives. Available as a CLI command or a self-hosted web application. The web UI also lets you package local image folders into `.cbz` archives directly from your browser.
+A tool for downloading comics from [readallcomics.com](https://readallcomics.com) and [batcave.biz](https://batcave.biz), packaging them as `.cbz` archives. Available as a CLI command or a self-hosted web application. The web UI also lets you package local image folders into `.cbz` archives directly from your browser.
 
 ## How it works
 
@@ -41,15 +41,16 @@ Download a single comic issue:
 yoink <url>
 ```
 
-**Example:**
+**Examples:**
 
 ```shell
 yoink https://readallcomics.com/ultraman-x-avengers-001-2024/
+yoink https://batcave.biz/ultraman-x-avengers-1-2025/
 ```
 
 The comic title is extracted from the page and used to name the archive. Output is saved to:
 
-```
+```text
 <library>/<Title>/<Title>.cbz
 ```
 
@@ -96,6 +97,7 @@ The web UI is then available at `http://localhost:8080`.
 - **Library grid** — browse your comics as a 150×300 cover grid with title-initial placeholders for missing covers
 - **Filter & sort** — filter by title and sort by newest, oldest, A–Z, or Z–A
 - **One-click download** — click any cover to download the `.cbz` archive directly
+- **Delete** — remove a comic from your library with the × button on each card (confirmation required)
 
 #### Packaging local images
 
@@ -116,6 +118,10 @@ Downloaded comics are stored at the path set by `YOINK_LIBRARY`. When using Dock
 ```yaml
 # docker-compose.yml
 services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    restart: unless-stopped
+
   yoink:
     image: git.brizzle.dev/bryan/yoink-go:latest
     ports:
@@ -124,16 +130,20 @@ services:
       - ./library:/library
     environment:
       - YOINK_LIBRARY=/library
+      - FLARESOLVERR_URL=http://flaresolverr:8191
     restart: unless-stopped
+    depends_on:
+      - flaresolverr
 ```
 
 ---
 
 ## Configuration
 
-| Variable        | Default    | Description                       |
-|-----------------|------------|-----------------------------------|
+| Variable | Default | Description |
+| --- | --- | --- |
 | `YOINK_LIBRARY` | `~/.yoink` | Directory where comics are stored |
+| `FLARESOLVERR_URL` | *(unset)* | URL of a [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) instance for Cloudflare-protected sites (e.g. batcave.biz). Required when running in Docker. |
 
 ```shell
 YOINK_LIBRARY=/mnt/media/comics yoink https://readallcomics.com/some-comic-001/
