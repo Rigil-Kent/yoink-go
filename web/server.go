@@ -76,6 +76,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/download", s.handleDownload)
 	mux.HandleFunc("/api/upload", s.handleUpload)
 	mux.HandleFunc("/api/comics", s.handleComics)
+	mux.HandleFunc("/api/comics/delete", s.handleDeleteComic)
 	mux.HandleFunc("/api/jobs", s.handleJobs)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -117,6 +118,7 @@ func (s *Server) handleDownload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid request", http.StatusBadRequest)
 		return
 	}
+	req.URL = strings.TrimSpace(req.URL)
 
 	job := &Job{
 		ID:        fmt.Sprintf("%d", time.Now().UnixNano()),
@@ -149,16 +151,18 @@ func (s *Server) runJob(job *Job) {
 	job.Title = c.Title
 	s.mu.Unlock()
 
-	errs := c.Download(len(c.Filelist))
-	if len(errs) > 0 {
+	if len(c.Filelist) == 0 {
 		s.mu.Lock()
 		job.Status = StatusError
-		job.Error = errs[0].Error()
+		job.Error = "no images found"
 		s.mu.Unlock()
 		return
 	}
 
+	errs := c.Download(len(c.Filelist))
+
 	if err := c.Archive(); err != nil {
+		c.Cleanup()
 		s.mu.Lock()
 		job.Status = StatusError
 		job.Error = err.Error()
@@ -167,6 +171,14 @@ func (s *Server) runJob(job *Job) {
 	}
 
 	c.Cleanup()
+
+	if len(errs) > 0 {
+		s.mu.Lock()
+		job.Status = StatusError
+		job.Error = errs[0].Error()
+		s.mu.Unlock()
+		return
+	}
 
 	s.mu.Lock()
 	job.Status = StatusComplete
@@ -349,6 +361,38 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"title": title, "status": "complete"})
+}
+
+func (s *Server) handleDeleteComic(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Title) == "" {
+		http.Error(w, "invalid request", http.StatusBadRequest)
+		return
+	}
+
+	// Sanitize: prevent path traversal
+	title := filepath.Base(strings.TrimSpace(req.Title))
+	comicDir := filepath.Join(s.libraryPath, title)
+
+	// Ensure the resolved path is still under the library
+	if !strings.HasPrefix(comicDir, filepath.Clean(s.libraryPath)+string(filepath.Separator)) {
+		http.Error(w, "invalid title", http.StatusBadRequest)
+		return
+	}
+
+	if err := os.RemoveAll(comicDir); err != nil {
+		http.Error(w, "failed to delete comic", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func Listen(addr string, libraryPath string) error {

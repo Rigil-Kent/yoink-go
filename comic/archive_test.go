@@ -29,6 +29,7 @@ func TestArchive(t *testing.T) {
 		c := &Comic{
 			Title:       title,
 			LibraryPath: tmpDir,
+			Filelist:    []string{"TestComic 001.jpg", "TestComic 002.jpg", "TestComic 003.png"},
 		}
 
 		err := c.Archive()
@@ -67,6 +68,7 @@ func TestArchive(t *testing.T) {
 		c := &Comic{
 			Title:       title,
 			LibraryPath: tmpDir,
+			Filelist:    []string{"page-001.jpg"},
 		}
 
 		err := c.Archive()
@@ -86,11 +88,9 @@ func TestArchive(t *testing.T) {
 		}
 	})
 
-	t.Run("handles empty directory", func(t *testing.T) {
+	t.Run("creates nothing when filelist is empty", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		title := "EmptyComic"
-		comicDir := filepath.Join(tmpDir, title)
-		os.MkdirAll(comicDir, os.ModePerm)
 
 		c := &Comic{
 			Title:       title,
@@ -102,9 +102,9 @@ func TestArchive(t *testing.T) {
 			t.Fatalf("Archive() unexpected error: %v", err)
 		}
 
-		archivePath := filepath.Join(comicDir, title+".cbz")
-		if _, err := os.Stat(archivePath); os.IsNotExist(err) {
-			t.Fatalf("expected archive %s to exist even if empty", archivePath)
+		archivePath := filepath.Join(tmpDir, title, title+".cbz")
+		if _, err := os.Stat(archivePath); !os.IsNotExist(err) {
+			t.Fatalf("expected no archive to be created for empty filelist")
 		}
 	})
 }

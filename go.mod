@@ -5,7 +5,6 @@ go 1.22.3
 require (
 	github.com/DaRealFreak/cloudflare-bp-go v1.0.4
 	github.com/PuerkitoBio/goquery v1.9.2
-	github.com/andybalholm/brotli v1.2.0
 	github.com/spf13/cobra v1.8.1
 )
 
