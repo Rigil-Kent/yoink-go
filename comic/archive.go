@@ -23,6 +23,9 @@ func (a ArchiveError) Error() string {
 // It takes no parameters.
 // Returns an error if the operation fails.
 func (c *Comic) Archive() error {
+	if len(c.Filelist) == 0 {
+		return nil
+	}
 
 	outputPath := filepath.Join(c.LibraryPath, c.Title, c.Title+".cbz")
 	err := os.MkdirAll(filepath.Dir(outputPath), os.ModePerm)
@@ -45,7 +48,7 @@ func (c *Comic) Archive() error {
 	sourcePath := filepath.Join(c.LibraryPath, c.Title)
 
 	err = filepath.Walk(
-		filepath.Dir(sourcePath),
+		sourcePath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return ArchiveError{

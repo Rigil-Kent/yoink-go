@@ -1,4 +1,8 @@
 services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    restart: unless-stopped
+
   yoink:
     build: .
     ports:
@@ -7,4 +11,7 @@ services:
       - ./library:/library
     environment:
       - YOINK_LIBRARY=/library
+      - FLARESOLVERR_URL=http://flaresolverr:8191
     restart: unless-stopped
+    depends_on:
+      - flaresolverr
