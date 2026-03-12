@@ -20,7 +20,7 @@ darwin:
 	GOOS=darwin GOARCH=arm64 go build -o $(BUILD_DIR)/$(BIN)-darwin-arm64
 
 docker-build:
-	podman build --format docker \
+	podman build --no-cache --format docker \
 		-t $(REGISTRY):$(VERSION) \
 		-t $(REGISTRY):latest \
 		.
